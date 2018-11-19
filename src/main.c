@@ -12,11 +12,18 @@
 typedef struct node Node;
 //Define BinaryTree
 struct node{
-    char* Data;
+    int Data;
     int Weight;
     Node* Lchild;
     Node* Rchild;
     Node* Father;
+};
+
+typedef struct preOrderData Data;
+struct preOrderData{
+    int status;
+    char* data;
+    int strLen;
 };
 
 //Define RawData
@@ -81,26 +88,240 @@ Node* initEmptyNode(Node* father){
     return np;
 }
 
-Node* initNode(Node* father,char* data,int weight){
+Node* initNode(Node* father,int data,int weight){
     Node* np;
-    char* str;
-    str = INIT_STRING;
-    strcpy(str,data);
     np = initEmptyNode(father);
-    np->Data = str;
+    np->Data = data;
     np->Weight = weight;
     return np;
+}
+
+Node** sort(Node** npp){
+    int count,i,j;
+    Node* temp;
+    i=0;
+    for(i=0;npp[i]!=NULL;i++){
+        //啦啦啦
+    }
+    count = i;
+    for(i=count-1;i>0;i--){
+        for(j=0;j<=i-1;j++){
+            if(npp[j]->Weight < npp[j+1]->Weight){
+                temp = npp[j];
+                npp[j] = npp[j+1];
+                npp[j+1] = temp;
+            }
+        }
+    }
+    return npp;
+}
+
+Node** rawToNode(Raw** src){
+    Node** npp;
+    Node* np;
+    int count,i;
+    npp = (Node**)malloc(sizeof(Node*)*40);
+    for(i=0;src[i] != NULL;i++){
+        npp[i] = initEmptyNode(NULL);
+        if(strcmp("blank",src[i]->Data)==0){
+            npp[i]->Data = (int)' ';
+        }else{
+            npp[i]->Data = (int)src[i]->Data[0];
+        }
+        npp[i]->Weight = src[i]->Weigth;
+        npp[i]->Lchild = NULL;
+        npp[i]->Rchild = NULL;
+    }
+    npp[i] = NULL;
+    return npp;
+}
+/*
+char* encode(char src,Node* head){
+    char* data;
+    int count;
+    int srci,lflag,rflag;
+    Node* np;
+    srci = (int)src;
+    np = head;
+    data = INIT_STRING;
+    count = 0;
+    while(1){
+        if(np->Data == srci){
+            return data;
+        }
+        
+    }
+    
+}
+*/
+void preOrderTravel(Node* np){
+    if(np == NULL){
+        printf("end\n");
+        return;
+    }
+    printf("data:%d  weight:%d\n",np->Data,np->Weight);
+    if(np->Lchild == NULL){
+        printf("Left ");
+    }
+    preOrderTravel(np->Lchild);
+    if(np->Rchild == NULL){
+        printf("Right ");
+    }
+    preOrderTravel(np->Rchild);
+}
+
+
+
+/** PreOrderTravel With Data
+ * flag:1-Left,0-Right
+ * 前序遍历编码字符
+*/
+Data preOrderTravleWithData(Node* np,char target,int flag,char* data,int strLen){
+    Data ret;
+    if(np == NULL){
+        ret.data = data;
+        ret.strLen = -1;
+        ret.status = 0;
+        return ret;  
+    }
+    if(flag != -1){
+        if(flag){
+            data[strLen] = '0';
+        }else{
+            data[strLen] = '1';
+        }
+        strLen++;
+        data[strLen] = '\0';      
+    }
+
+    if((int)target == np->Data){
+        ret.status = 1;
+        ret.data = data;
+        ret.strLen = strLen;
+        return ret;
+    }else{
+        ret = preOrderTravleWithData(np->Lchild,target,1,data,strLen);
+        if(ret.status){
+            return ret;
+        }
+        ret = preOrderTravleWithData(np->Rchild,target,0,data,strLen);
+        if(ret.status){
+            return ret;
+        }
+        ret.data = data;
+        ret.strLen = -1;
+        ret.status = 0;
+        return ret;
+    }
+}
+
+/** CreateHaffmanTree
+ * Create a Haffman tree from input struct array
+*/
+Node* CreateHaffmanTree(Node** src){
+    int flag,tempi1,tempi2,tempi3,i,j,k,count;
+    Node *temp1,*temp2,*temp3;
+    Node** npp;
+    npp = src;
+    flag = 1;
+    while(1){
+        if(npp[1]==NULL){
+            break;
+        }
+        npp = sort(npp);
+        for(i=0;src[i]!=NULL;i++){
+            //啦啦啦
+        }
+        count = i;
+        temp1 = npp[count-1];
+        temp2 = npp[count-2];
+        temp3 = initEmptyNode(NULL);
+        temp3->Data = -10;  //标记这个不是叶子节点，Data!=-10则是叶子节点
+        temp3->Weight = temp1->Weight + temp2->Weight;
+        if(temp1->Weight > temp2->Weight){
+            //temp1权值大于temp2，temp1置左
+            temp3->Lchild = temp1;
+            temp3->Rchild = temp2;
+        }else{
+            temp3->Lchild = temp2;
+            temp3->Rchild = temp1;
+        }
+        temp1->Father = temp3;
+        temp2->Father = temp3;
+        npp[count-2] = temp3;
+        npp[count-1] = NULL;
+    }
+    return npp[0];
+}
+
+char* encode(char* src,Node* np){
+    char* dest,*temp2,*temp;
+    Data data;
+    int i,j,len,k;
+    dest = (char*)malloc(sizeof(char)*500);
+    temp2 = INIT_STRING;
+    temp2[0] = '\0';
+    i = 0;
+    j = 0;
+    dest[0] = '\0';
+    for(i=0;src[i] != '\0';i++){
+        data = preOrderTravleWithData(np,src[i],-1,temp2,0);
+        temp = data.data;
+        len = data.strLen;
+        for(k=0;k<len;k++){
+            dest[j+k] = temp[k];
+        }
+        dest[j+k] = '\0';
+        j+=k;
+    }
+    return dest;
+}
+
+char* decode(Node* head,char* src){
+    int i,j,k;
+    char* temp1,temp2;
+    Node* np;
+    i=0,j=0,k=0;
+    np = head;
+    temp1 = INIT_STRING;
+    for(i=0;src[i]!='\0';i++){
+        if(np->Lchild==NULL&&np->Rchild==NULL){
+            temp1[j] = (char)(np->Data);
+            temp1[j+1] = '\0';
+            j++;
+            np = head;
+            continue;
+        }else{
+            if(src[i] == '0'){
+                np = np->Lchild;
+            }else{
+                np = np->Rchild;
+            }
+        }
+    }
+    return temp1;
 }
 
 /** main
  main entry fnuction 
 */
 int main(){
-    Raw** npp;
+    Raw** rpp;
+    Node** npp;
+    char*temp1,*temp2;
     int i;
-    npp = readFromFile();
+    rpp = readFromFile();
+    npp = rawToNode(rpp);
+    npp = sort(npp);
     for(i=0;npp[i]!=NULL;i++){
-        printf("%s %d\n",npp[i]->Data,npp[i]->Weigth);
+        printf("%c %d\n",(char)npp[i]->Data,npp[i]->Weight);
     } 
+    printf("%d\n\n");
+    Node* hft = CreateHaffmanTree(npp);
+    preOrderTravel(hft);
+    temp1 = INIT_STRING;
+    temp2 = (char*)malloc(sizeof(char)*500);
+    gets(temp1);
+    printf("%s",decode(hft,encode(temp1,hft)));
     system("pause");
 }
