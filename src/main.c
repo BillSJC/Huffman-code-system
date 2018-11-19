@@ -284,12 +284,13 @@ char* decode(Node* head,char* src){
     i=0,j=0,k=0;
     np = head;
     temp1 = INIT_STRING;
-    for(i=0;src[i]!='\0';i++){
+    for(i=0;src[i-1]!='\0';i++){
         if(np->Lchild==NULL&&np->Rchild==NULL){
             temp1[j] = (char)(np->Data);
             temp1[j+1] = '\0';
             j++;
             np = head;
+            i--;
             continue;
         }else{
             if(src[i] == '0'){
@@ -302,13 +303,33 @@ char* decode(Node* head,char* src){
     return temp1;
 }
 
+int checkInputString(char* src){
+    int i;
+    for(i=0;src[i] != '\0';i++){
+        if((src[i]!=32)&&src[i]<41&&src[i]>90){
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int checkInputStream(char* src){
+    int i;
+    for(i=0;src[i] != '\0';i++){
+        if((src[i]!='0'&&src[i]!='1'){
+            return 0;
+        }
+    }
+    return 1;
+}
+
 /** main
  main entry fnuction 
 */
 int main(){
     Raw** rpp;
     Node** npp;
-    char*temp1,*temp2;
+    char*temp1,*temp2,*en,*de;
     int i;
     rpp = readFromFile();
     npp = rawToNode(rpp);
@@ -322,6 +343,8 @@ int main(){
     temp1 = INIT_STRING;
     temp2 = (char*)malloc(sizeof(char)*500);
     gets(temp1);
-    printf("%s",decode(hft,encode(temp1,hft)));
+    en = encode(temp1,hft);
+    de = decode(hft,en);
+    printf("%s %s",en,de);
     system("pause");
 }
