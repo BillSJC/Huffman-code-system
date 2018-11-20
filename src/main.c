@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<malloc.h>
 #include<string.h>
+#include<conio.h>
 
 //define filepath
 #define FILEPATH "D:\\weight.csv"
@@ -9,6 +10,7 @@
 #define STRING_MAXSIZE 100
 #define INIT_STRING (char*)malloc(sizeof(char)*STRING_MAXSIZE)
 
+typedef struct gnode GNode;
 typedef struct node Node;
 //Define BinaryTree
 struct node{
@@ -17,6 +19,19 @@ struct node{
     Node* Lchild;
     Node* Rchild;
     Node* Father;
+    GNode* toGNode;
+};
+
+//Define BinaryTree
+struct gnode{
+    int Data;
+    int Weight;
+    int Level;
+    int Pos;
+    int PrePos;
+    int isLeft;
+    int isLeaves;
+    Node* toNode;
 };
 
 typedef struct preOrderData Data;
@@ -306,7 +321,7 @@ char* decode(Node* head,char* src){
 int checkInputString(char* src){
     int i;
     for(i=0;src[i] != '\0';i++){
-        if((src[i]!=32)&&src[i]<41&&src[i]>90){
+        if(src[i]!=32&&(src[i]<41||src[i]>90)){
             return 0;
         }
     }
@@ -316,17 +331,301 @@ int checkInputString(char* src){
 int checkInputStream(char* src){
     int i;
     for(i=0;src[i] != '\0';i++){
-        if((src[i]!='0'&&src[i]!='1'){
+        if(src[i]!='0'&&src[i]!='1'){
             return 0;
         }
     }
     return 1;
 }
 
+void encodeMenu(Node* head){
+    int flag;
+    char*src,*dest;
+    src = INIT_STRING;
+    system("cls");
+    printf(
+        "========================= 加密字符串 =========================\n\n"
+        "                           请输入待加密字符串\n"
+        "                           仅可包含A-Z和空格\n\n"
+        "===================================================================\n\n"
+    );
+    gets(src);
+    flag = checkInputString(src);
+    if(flag==1){
+        dest = encode(src,head);
+        system("cls");
+        printf(
+            "========================= 加密字符串 =========================\n\n"
+            "                           加密成功\n"
+            "===================================================================\n\n"
+        );
+        printf("%s",dest);
+        getch();
+        return;
+    }
+    system("cls");
+    printf(
+        "========================= 加密字符串 =========================\n\n"
+        "                           加密失败\n"
+        "                           非法字符\n\n"
+        "===================================================================\n\n"
+    );
+    getch();
+    return;
+}
+
+void decodeMenu(Node* head){
+    int flag;
+    char*src,*dest;
+    src = INIT_STRING;
+    system("cls");
+    printf(
+        "========================= 解密字符串 =========================\n\n"
+        "                           请输入待加密字符串\n"
+        "                             仅可包含0和1\n\n"
+        "===================================================================\n\n"
+    );
+    gets(src);
+    flag = checkInputStream(src);
+    if(flag==1){
+        dest = decode(head,src);
+        system("cls");
+        printf(
+            "========================= 解密字符串 =========================\n\n"
+            "                           解密成功\n"
+            "===================================================================\n\n"
+        );
+        printf("%s",dest);
+        getch();
+        return;
+    }
+    system("cls");
+    printf(
+        "========================= 解密字符串 =========================\n\n"
+        "                           解密失败\n"
+        "                           非法字符\n\n"
+        "===================================================================\n\n"
+    );
+    getch();
+    return;
+}
+
+void PreOrderTravelGraph(Node* np,int* prePos){
+    if(np == NULL){
+        return;
+    }
+    if(np->toGNode->isLeaves){
+        np->toGNode->PrePos = *prePos;
+        np->toGNode->Pos = (np->toGNode->PrePos+1)*4;
+        *prePos = *prePos+1;
+    }
+    PreOrderTravelGraph(np->Lchild,prePos);
+    PreOrderTravelGraph(np->Rchild,prePos);
+}
+
+void PreOrderTravelGraph2(Node* np){
+    if(np->toGNode->isLeaves){
+        return;
+    }
+    PreOrderTravelGraph2(np->Lchild);
+    PreOrderTravelGraph2(np->Rchild);
+    np->toGNode->Pos = ((np->Lchild->toGNode->Pos)+(np->Rchild->toGNode->Pos))/2;
+    printf("%d\n",np->toGNode->Pos);
+}
+
+void levelOrderTravel(Node* np,GNode** array,int* arrLen,int levelNow,int LevelNum[],int tarLevel,int left){
+    if(np == NULL){
+        return;
+    }
+    if(levelNow == tarLevel){
+        GNode* gnp = (GNode*)malloc(sizeof(GNode));
+        gnp->toNode = np;
+        np->toGNode = gnp;
+        gnp->Data = np->Data;
+        gnp->Level = levelNow;
+        gnp->isLeft = left;
+        gnp->Weight = np->Weight;
+        array[*arrLen] = gnp;
+        LevelNum[tarLevel]++;
+        *arrLen = *arrLen + 1;
+        if(gnp->toNode->Data == -10){
+            gnp->isLeaves = 0;
+        }else{
+            gnp->isLeaves = 1;
+        }
+        return;
+    }
+    levelOrderTravel(np->Lchild,array,arrLen,levelNow+1,LevelNum,tarLevel,1);
+    levelOrderTravel(np->Rchild,array,arrLen,levelNow+1,LevelNum,tarLevel,0);
+    return;
+}
+
+void graphMenu(Node* head){
+    int i,j,k,temp,*arrLen,*prePos,*arrLenLast,maxLevel,LevelNum[20],LevelNumC[20],LevelPos[20][50],levelNow,tarLevel,max,posNow,nextPos,toPos;
+    int ppos1,pposn;
+    for(i=0;i<20;i++){
+        LevelNum[i] = 0;
+        LevelNumC[i] = 0;
+    }
+    GNode* array[200];//=(GNode**)malloc(sizeof(GNode*)*200);
+    array[0] = NULL;
+    arrLen = (int*)malloc(sizeof(int));
+    arrLenLast = (int*)malloc(sizeof(int));
+    prePos = (int*)malloc(sizeof(int));
+    *prePos = 0;
+    *arrLen = 0;
+    *arrLenLast = 0;
+    maxLevel = 0;
+    levelNow = 0;
+    tarLevel = 0;
+    for(i=0;i<20;i++){
+        *arrLenLast = *arrLen;
+        levelOrderTravel(head,array,arrLen,0,LevelNum,i,-1);
+        if(*arrLen == *arrLenLast){
+            break;
+        }
+    }
+    temp = 0;
+    maxLevel = i;
+    PreOrderTravelGraph(head,prePos);
+    PreOrderTravelGraph2(head);
+    for(i=1;i<maxLevel;i++){
+        LevelNumC[i] = LevelNumC[i-1] + LevelNum[i-1];
+    }
+    for(i=0;i<maxLevel;i++){
+        for(j=0;j<LevelNum[i];j++){
+            LevelPos[i][j] = array[LevelNumC[i]+j]->Pos;
+        }
+    }
+    for(i=0;i<maxLevel;i++){
+        max = LevelNum[i];
+        j=0,posNow=0;
+        while(j<max){
+            nextPos=LevelPos[i][j];
+            for(k=posNow;k<nextPos-2;k++){
+                printf(" ");
+            }
+            if(array[LevelNumC[i]+j]->isLeaves){
+                printf("  %c ",(char)array[LevelNumC[i]+j]->toNode->Data);
+            }else{
+                if(array[LevelNumC[i]+j]->Weight>1000){
+                    printf("%4d",array[LevelNumC[i]+j]->Weight);
+                }else if(array[LevelNumC[i]+j]->Weight>100){
+                    printf(" %3d",array[LevelNumC[i]+j]->Weight);
+                }else if(array[LevelNumC[i]+j]->Weight>10){
+                    printf(" %2d ",array[LevelNumC[i]+j]->Weight);
+                }else{
+                    printf("  %1d ",array[LevelNumC[i]+j]->Weight);
+                }
+            }
+            posNow = nextPos+1;
+            j++;
+        }
+        printf("\n");
+
+        if(i!=maxLevel-1){
+            ppos1 = array[LevelNumC[i]]->Pos;
+            pposn = array[LevelNumC[i]+LevelNum[i]]->Pos;
+            j=0,posNow=0;
+            max = LevelNum[i];
+            while(j<max){
+                nextPos=LevelPos[i][j];
+                for(k=posNow;k<nextPos;k++){
+                    printf(" ");
+                }
+                if(array[LevelNumC[i]+j]->isLeaves){
+                    printf(" ");
+                }else{
+                    printf("|");
+                }
+                posNow = k;
+                j++;
+            }
+            printf("\n");
+            posNow=0;
+            j=0;
+            while(j<max){
+                if(array[LevelNumC[i]+j]->isLeaves){
+                    j++;
+                    continue;
+                    posNow-=4;
+                }
+                for(;posNow<array[LevelNumC[i]+j]->toNode->Lchild->toGNode->Pos+1;posNow++){
+                    printf(" ");
+                }
+                for(;posNow<array[LevelNumC[i]+j]->toNode->Rchild->toGNode->Pos+1;posNow++){
+                    printf("-");
+                }
+                j++;
+                posNow-=2;
+            }  
+        }
+
+
+        if(1){
+            printf("\n");
+            i++;
+            j=0,posNow=0;
+            max = LevelNum[i];
+            while(j<max){
+                nextPos=LevelPos[i][j];
+                for(k=posNow;k<nextPos;k++){
+                    printf(" ");
+                }
+                printf("|");
+                posNow = k;
+                j++;
+            }
+            i--;
+        }
+
+
+
+        printf("\n");
+    }
+
+    return;
+}
+
+void mainMenu(Node* head){
+    char temp;
+    while(1){
+        system("cls");
+        printf(
+            "========================= 霍夫曼树编码系统 =========================\n\n"
+            "                           1、加密字符串\n"
+            "                           2、解密编码\n"
+            "                           3、图形化树\n"
+            "                           0、退出系统\n\n"
+            "===================================================================\n\n"
+        );
+        temp = (char)getch();
+        switch(temp){
+            case '1':{
+                encodeMenu(head);
+                break;
+            }
+            case '2':{
+                decodeMenu(head);
+                break;
+            }
+            case '3':{
+                graphMenu(head);
+                break;
+            }
+            case '0':{
+                return;
+            }
+        }        
+    }
+
+}
+
 /** main
  main entry fnuction 
 */
 int main(){
+    system("chcp 65001");
     Raw** rpp;
     Node** npp;
     char*temp1,*temp2,*en,*de;
@@ -334,11 +633,14 @@ int main(){
     rpp = readFromFile();
     npp = rawToNode(rpp);
     npp = sort(npp);
+    /*
     for(i=0;npp[i]!=NULL;i++){
         printf("%c %d\n",(char)npp[i]->Data,npp[i]->Weight);
-    } 
-    printf("%d\n\n");
+    }
+    //*/
     Node* hft = CreateHaffmanTree(npp);
+    mainMenu(hft);
+    /*
     preOrderTravel(hft);
     temp1 = INIT_STRING;
     temp2 = (char*)malloc(sizeof(char)*500);
@@ -346,5 +648,6 @@ int main(){
     en = encode(temp1,hft);
     de = decode(hft,en);
     printf("%s %s",en,de);
+    */
     system("pause");
 }
