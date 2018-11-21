@@ -430,7 +430,6 @@ void PreOrderTravelGraph2(Node* np){
     PreOrderTravelGraph2(np->Lchild);
     PreOrderTravelGraph2(np->Rchild);
     np->toGNode->Pos = ((np->Lchild->toGNode->Pos)+(np->Rchild->toGNode->Pos))/2;
-    printf("%d\n",np->toGNode->Pos);
 }
 
 void levelOrderTravel(Node* np,GNode** array,int* arrLen,int levelNow,int LevelNum[],int tarLevel,int left){
@@ -461,6 +460,7 @@ void levelOrderTravel(Node* np,GNode** array,int* arrLen,int levelNow,int LevelN
 }
 
 void graphMenu(Node* head){
+    system("cls");
     int i,j,k,temp,*arrLen,*prePos,*arrLenLast,maxLevel,LevelNum[20],LevelNumC[20],LevelPos[20][50],levelNow,tarLevel,max,posNow,nextPos,toPos;
     int ppos1,pposn;
     for(i=0;i<20;i++){
@@ -550,10 +550,10 @@ void graphMenu(Node* head){
                     continue;
                     posNow-=4;
                 }
-                for(;posNow<array[LevelNumC[i]+j]->toNode->Lchild->toGNode->Pos+1;posNow++){
+                for(;posNow<array[LevelNumC[i]+j]->toNode->Lchild->toGNode->Pos;posNow++){
                     printf(" ");
                 }
-                for(;posNow<array[LevelNumC[i]+j]->toNode->Rchild->toGNode->Pos+1;posNow++){
+                for(;posNow<array[LevelNumC[i]+j]->toNode->Rchild->toGNode->Pos+2;posNow++){
                     printf("-");
                 }
                 j++;
@@ -578,11 +578,12 @@ void graphMenu(Node* head){
             }
             i--;
         }
-
-
-
         printf("\n");
+
+
     }
+    printf("\n\n\n按任意键继续....");
+    getch();
 
     return;
 }
@@ -633,21 +634,7 @@ int main(){
     rpp = readFromFile();
     npp = rawToNode(rpp);
     npp = sort(npp);
-    /*
-    for(i=0;npp[i]!=NULL;i++){
-        printf("%c %d\n",(char)npp[i]->Data,npp[i]->Weight);
-    }
-    //*/
     Node* hft = CreateHaffmanTree(npp);
     mainMenu(hft);
-    /*
-    preOrderTravel(hft);
-    temp1 = INIT_STRING;
-    temp2 = (char*)malloc(sizeof(char)*500);
-    gets(temp1);
-    en = encode(temp1,hft);
-    de = decode(hft,en);
-    printf("%s %s",en,de);
-    */
     system("pause");
 }
